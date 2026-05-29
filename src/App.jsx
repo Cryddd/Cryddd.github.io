@@ -1,8 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import MagneticText from "./components/MagneticText.jsx";
 import CursorGlow from "./components/CursorGlow.jsx";
 import Ambience from "./components/Ambience.jsx";
-import CafeScene from "./components/CafeScene.jsx";
+import { useInteractiveText } from "./context/InteractiveTextContext.jsx";
+
+const HeroScene3D = lazy(() => import("./components/HeroScene3D.jsx"));
+const LibraryZone3D = lazy(() => import("./components/LibraryZone3D.jsx"));
 
 const CRAFT = [
   {
@@ -60,6 +63,22 @@ function Reveal({ children, delay = 0 }) {
   );
 }
 
+function InteractiveToggle() {
+  const { enabled, toggle } = useInteractiveText();
+  return (
+    <button
+      type="button"
+      className={`toggle ${enabled ? "toggle--on" : ""}`}
+      onClick={toggle}
+      aria-pressed={enabled}
+      title="Toggle hover-reactive text"
+    >
+      <span className="toggle__dot" />
+      Interactive text {enabled ? "ON" : "OFF"}
+    </button>
+  );
+}
+
 export default function App() {
   const [scrolled, setScrolled] = useState(false);
 
@@ -78,6 +97,7 @@ export default function App() {
         <span className="topbar__mark">明 · Melvin</span>
         <nav className="topbar__nav">
           <a href="#story">Story</a>
+          <a href="#library">Library</a>
           <a href="#craft">Craft</a>
           <a href="#connect">Connect</a>
           <a className="topbar__back" href="https://github.com/Cryddd">
@@ -97,12 +117,13 @@ export default function App() {
               <MagneticText text="meets craft." as="span" className="hero__title-accent" />
             </h1>
             <p className="hero__lede">
-              I'm Melvin — a full-stack engineer who treats software like a
-              warm, deliberate practice. Move your cursor across the words.
-              Everything here responds to you.
+              <MagneticText
+                tone="body"
+                text="I'm Melvin — a full-stack engineer who treats software like a warm, deliberate practice. Move your cursor across the words. Everything here responds to you."
+              />
             </p>
             <div className="hero__actions">
-              <a className="btn btn--primary" href="#story">
+              <a className="btn btn--primary" href="#library">
                 Enter the room
               </a>
               <a className="btn btn--ghost" href="https://github.com/Cryddd">
@@ -111,7 +132,9 @@ export default function App() {
             </div>
           </div>
           <div className="hero__scene">
-            <CafeScene />
+            <Suspense fallback={<div className="scene3d scene3d--loading hero3d" />}>
+              <HeroScene3D />
+            </Suspense>
             <p className="hero__caption">
               Afternoon light, one cup, and a problem worth solving.
             </p>
@@ -128,26 +151,51 @@ export default function App() {
           <div className="story__grid">
             <Reveal delay={80}>
               <p>
-                I didn't grow up knowing how to code. I entered college knowing
-                almost nothing — until Java arrived in my second year and quietly
-                rearranged everything.
+                <MagneticText
+                  tone="body"
+                  text="I didn't grow up knowing how to code. I entered college knowing almost nothing — until Java arrived in my second year and quietly rearranged everything."
+                />
               </p>
             </Reveal>
             <Reveal delay={160}>
               <p>
-                I used to write Java on sheets of paper before labs, running the
-                programs in my head like puzzles in another universe. It felt
-                less like studying and more like discovering a new form of art.
+                <MagneticText
+                  tone="body"
+                  text="I used to write Java on sheets of paper before labs, running the programs in my head like puzzles in another universe. It felt less like studying and more like discovering a new form of art."
+                />
               </p>
             </Reveal>
             <Reveal delay={240}>
               <p>
-                That curiosity became passion. That passion became creativity.
-                And that creativity became my world — interfaces that feel
-                alive, systems that feel human.
+                <MagneticText
+                  tone="body"
+                  text="That curiosity became passion. That passion became creativity. And that creativity became my world — interfaces that feel alive, systems that feel human."
+                />
               </p>
             </Reveal>
           </div>
+        </section>
+
+        {/* ── Library zone ─────────────────────── */}
+        <section id="library" className="library">
+          <Reveal>
+            <h2 className="section-title section-title--center">
+              <MagneticText text="The reading room." />
+            </h2>
+          </Reveal>
+          <Reveal delay={100}>
+            <p className="library__lede">
+              <MagneticText
+                tone="body"
+                text="A quiet, living library — people browse the shelves, others read or work by lamplight. The room rests in shadow until your cursor brings the warmth."
+              />
+            </p>
+          </Reveal>
+          <Reveal delay={160}>
+            <Suspense fallback={<div className="scene3d scene3d--loading library3d" />}>
+              <LibraryZone3D />
+            </Suspense>
+          </Reveal>
         </section>
 
         {/* ── Craft ────────────────────────────── */}
@@ -162,8 +210,12 @@ export default function App() {
               <Reveal key={c.k} delay={i * 100}>
                 <article className="card">
                   <span className="card__index">{c.k}</span>
-                  <h3 className="card__title">{c.title}</h3>
-                  <p className="card__body">{c.body}</p>
+                  <h3 className="card__title">
+                    <MagneticText text={c.title} />
+                  </h3>
+                  <p className="card__body">
+                    <MagneticText tone="body" text={c.body} />
+                  </p>
                 </article>
               </Reveal>
             ))}
@@ -179,7 +231,10 @@ export default function App() {
           </Reveal>
           <Reveal delay={120}>
             <p className="connect__lede">
-              Still just getting started — and that's the best part.
+              <MagneticText
+                tone="body"
+                text="Still just getting started — and that's the best part."
+              />
             </p>
           </Reveal>
           <Reveal delay={200}>
@@ -201,6 +256,8 @@ export default function App() {
         <span className="footer__dot">·</span>
         <span>Built with care, coffee, and curiosity.</span>
       </footer>
+
+      <InteractiveToggle />
     </div>
   );
 }

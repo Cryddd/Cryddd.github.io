@@ -104,6 +104,15 @@ a {
   display: inline-block;
 }
 
+.magnetic--body {
+  display: inline;
+}
+
+.magnetic__word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
 .magnetic__char {
   display: inline-block;
   will-change: transform;
@@ -531,6 +540,173 @@ section {
   100% {
     transform: translate(110px, 250px) rotate(220deg);
     opacity: 0;
+  }
+}
+
+/* ── 3D scenes ─────────────────────────────── */
+.scene3d {
+  position: relative;
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(224, 168, 92, 0.05) inset;
+}
+
+.scene3d__canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.scene3d--loading {
+  background: linear-gradient(110deg, var(--panel), var(--bg-soft), var(--panel));
+  background-size: 220% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 180% 0;
+  }
+  100% {
+    background-position: -80% 0;
+  }
+}
+
+.hero3d {
+  aspect-ratio: 4 / 3;
+}
+
+.library3d {
+  aspect-ratio: 16 / 9;
+  background: #0d0a08;
+}
+
+/* Vignette to deepen the dim library mood; lets the moving lamp pop. */
+.library3d__veil {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 90% at 50% 40%,
+    transparent 35%,
+    rgba(8, 6, 4, 0.5) 100%
+  );
+}
+
+.scene3d__hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.7rem;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+/* Speech bubble for the hero greeting */
+.speech {
+  position: absolute;
+  top: 14%;
+  left: 50%;
+  transform: translate(-50%, 8px) scale(0.9);
+  background: var(--ink);
+  color: #1c1714;
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 1.15rem;
+  padding: 0.5rem 1rem;
+  border-radius: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.2, 1.4, 0.4, 1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.speech::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  transform: translateX(-50%);
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid var(--ink);
+}
+
+.speech--show {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+}
+
+/* ── Library section ───────────────────────── */
+.library {
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+
+.library__lede {
+  max-width: 60ch;
+  margin: 0 auto 2.6rem;
+  color: var(--ink-dim);
+  font-size: 1.06rem;
+}
+
+/* ── Interactive text toggle ───────────────── */
+.toggle {
+  position: fixed;
+  right: 1.1rem;
+  bottom: 1.1rem;
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(28, 23, 20, 0.82);
+  backdrop-filter: blur(10px);
+  color: var(--ink-dim);
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: color 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
+}
+
+.toggle:hover {
+  transform: translateY(-2px);
+  border-color: var(--amber);
+  color: var(--ink);
+}
+
+.toggle__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.toggle--on .toggle__dot {
+  background: var(--amber);
+  box-shadow: 0 0 10px var(--amber);
+}
+
+.toggle--on {
+  color: var(--ink);
+}
+
+@media (max-width: 640px) {
+  .toggle {
+    font-size: 0.7rem;
+    padding: 0.5rem 0.8rem;
   }
 }
 
