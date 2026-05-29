@@ -33,15 +33,27 @@ export function createPixelEngine(container, {
 
   const ctx = canvas.getContext("2d");
   let scale = 1;
+  let elapsed = 0;
+
+  function renderFrame() {
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    draw(ctx, elapsed);
+  }
 
   function resize() {
     const cssW = container.clientWidth || 1;
     const cssH = container.clientHeight || 1;
     const dpr = Math.min(window.devicePixelRatio || 1, maxDpr);
-    canvas.width = Math.max(1, Math.round(cssW * dpr));
-    canvas.height = Math.max(1, Math.round(cssH * dpr));
-    // Scale logical scene to fill the backing store (aspect assumed to match).
+    const w = Math.max(1, Math.round(cssW * dpr));
+    const h = Math.max(1, Math.round(cssH * dpr));
+    if (w === canvas.width && h === canvas.height) return;
+    // NOTE: assigning canvas.width/height clears the canvas, so we always
+    // repaint immediately afterwards to avoid a blank (flat-color) frame.
+    canvas.width = w;
+    canvas.height = h;
     scale = canvas.width / width;
+    renderFrame();
   }
   resize();
 
@@ -60,13 +72,10 @@ export function createPixelEngine(container, {
   let raf = 0;
   let last = performance.now() / 1000;
   let acc = 0;
-  let elapsed = 0;
 
-  function renderFrame() {
-    ctx.setTransform(scale, 0, 0, scale, 0, 0);
-    ctx.imageSmoothingEnabled = false;
-    draw(ctx, elapsed);
-  }
+  // Reduced-motion users get a calmer, slower world rather than a frozen one,
+  // so the scenes never collapse to a flat background and still feel present.
+  const rate = reduceMotion ? 0.35 : 1;
 
   function loop() {
     raf = requestAnimationFrame(loop);
@@ -75,7 +84,7 @@ export function createPixelEngine(container, {
       return;
     }
     const now = performance.now() / 1000;
-    let frameDt = now - last;
+    let frameDt = (now - last) * rate;
     last = now;
     if (frameDt > 0.1) frameDt = 0.1; // avoid spiral after tab switch
     acc += frameDt;
@@ -87,12 +96,7 @@ export function createPixelEngine(container, {
     renderFrame();
   }
 
-  if (reduceMotion) {
-    update(0, 0);
-    renderFrame();
-  } else {
-    raf = requestAnimationFrame(loop);
-  }
+  raf = requestAnimationFrame(loop);
 
   return {
     reduceMotion,
