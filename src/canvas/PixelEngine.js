@@ -128,14 +128,16 @@ export function lerp(a, b, t) {
 }
 
 /**
- * Draws a small chibi pixel person at a feet-anchored position (x,y = bottom
- * center). Supports 4 facing directions, walk bob, and a few action poses.
- * Kept intentionally small (~12x18 logical px) to match the reference scale.
+ * Draws a refined chibi pixel person at a feet-anchored position (x,y = bottom
+ * center). Supports 4 facing directions, walk bob, action poses, optional
+ * headphones, and uniform scaling. At scale 1 the sprite footprint is ~12x20
+ * logical px so existing layouts stay valid; pass `scale` to enlarge a hero
+ * without affecting other characters.
  *
  * palette: { skin, hair, shirt, pants, shoe }
  * dir: "down" | "up" | "left" | "right"
  * opts: { frame (0..3 walk), arm ("rest"|"raise"|"type"|"hold"|"wave"|"read"),
- *         sit (bool), bob (px), blink (bool) }
+ *         sit, bob, blink, smile, headphones, scale, waveT (0..1 for hand wag) }
  */
 export function drawPerson(ctx, x, y, palette, dir = "down", opts = {}) {
   const { skin, hair, shirt, pants, shoe } = palette;
@@ -144,107 +146,134 @@ export function drawPerson(ctx, x, y, palette, dir = "down", opts = {}) {
   const sit = !!opts.sit;
   const bob = opts.bob || 0;
   const blink = !!opts.blink;
+  const scale = opts.scale || 1;
+  const headphones = !!opts.headphones;
+  const waveT = opts.waveT || 0;
 
-  // step offset for legs while walking (frames 1 & 3 stride)
   const stride = frame === 1 ? 1 : frame === 3 ? -1 : 0;
+  const skinShade = shade(skin, -20);
+  const hairDark = shade(hair, -26);
+  const hairLite = shade(hair, 28);
+  const shirtDark = shade(shirt, -20);
+  const shirtLite = shade(shirt, 18);
+  const eye = "#1b1d24";
+  const cheek = "#e0917a";
 
   ctx.save();
   ctx.translate(Math.round(x), Math.round(y - bob));
+  if (scale !== 1) ctx.scale(scale, scale);
 
-  // Shadow
-  ctx.globalAlpha = 0.18;
+  // Soft contact shadow
+  ctx.globalAlpha = 0.16;
   px(ctx, -5, -1, 10, 2, "#000000");
   ctx.globalAlpha = 1;
 
-  // Legs / shoes (hidden a bit when sitting)
+  // Legs / shoes (mostly hidden when sitting)
   if (!sit) {
-    px(ctx, -3, -4, 2, 4, pants);
-    px(ctx, 1, -4, 2, 4, pants);
-    px(ctx, -3 + stride, -1, 2, 1, shoe);
-    px(ctx, 1 - stride, -1, 2, 1, shoe);
+    px(ctx, -3, -5, 6, 4, pants);
+    px(ctx, 0, -5, 1, 4, shade(pants, -20)); // center seam
+    px(ctx, -3 + stride, -1, 3, 1, shoe);
+    px(ctx, 0 - stride, -1, 3, 1, shoe);
   } else {
-    // seated: short legs forward
-    px(ctx, -3, -3, 2, 3, pants);
-    px(ctx, 1, -3, 2, 3, pants);
+    px(ctx, -3, -4, 6, 4, pants);
+    px(ctx, 0, -4, 1, 4, shade(pants, -20));
   }
 
-  // Body / torso (sweater)
-  const torsoTop = sit ? -10 : -11;
-  px(ctx, -4, torsoTop, 8, torsoTop === -10 ? 7 : 7, shirt);
-  // subtle shading on one side
-  px(ctx, 2, torsoTop, 2, 7, shade(shirt, -14));
+  // Torso (sweater) with light/shade for volume
+  const torsoTop = sit ? -11 : -12;
+  const torsoH = -4 - torsoTop;
+  px(ctx, -4, torsoTop, 8, torsoH, shirt);
+  px(ctx, 2, torsoTop, 2, torsoH, shirtDark); // right shading
+  px(ctx, -4, torsoTop, 1, torsoH, shirtLite); // left rim light
+  px(ctx, -4, torsoTop, 8, 1, shirtLite); // shoulder seam
 
-  // Arms depend on direction + action
-  drawArms(ctx, torsoTop, shirt, skin, dir, arm, frame);
+  drawArms(ctx, torsoTop, shirt, skin, dir, arm, frame, waveT);
 
-  // Head
   const headY = torsoTop - 8;
-  px(ctx, -4, headY, 8, 8, skin);
+  // Neck
+  px(ctx, -2, torsoTop - 1, 4, 1, skinShade);
 
-  // Hair + face per direction
+  // Head base (corners trimmed for a rounder silhouette)
+  px(ctx, -4, headY + 1, 8, 7, skin);
+  px(ctx, -3, headY, 6, 1, skin);
+  px(ctx, 3, headY + 1, 1, 6, skinShade); // far-cheek shade
+
   if (dir === "up") {
-    // back of head: hair covers most
-    px(ctx, -4, headY, 8, 6, hair);
-    px(ctx, -4, headY, 8, 1, shade(hair, -18));
+    // Back of head — full hair with a clear highlight crown
+    px(ctx, -4, headY + 1, 8, 6, hair);
+    px(ctx, -3, headY, 6, 1, hairDark);
+    px(ctx, -3, headY + 2, 6, 1, hairLite); // crown highlight
+    px(ctx, -2, headY + 4, 4, 1, shade(hair, 12)); // nape sheen
   } else if (dir === "left" || dir === "right") {
-    const flip = dir === "left" ? -1 : 1;
-    px(ctx, -4, headY, 8, 3, hair);
-    px(ctx, dir === "left" ? -4 : 1, headY, 3, 5, hair); // side hair
-    // one eye visible
-    if (!blink) px(ctx, flip > 0 ? 1 : -2, headY + 4, 1, 2, "#15171d");
-    else px(ctx, flip > 0 ? 1 : -2, headY + 5, 1, 1, "#15171d");
-    // cheek
-    px(ctx, flip > 0 ? 0 : -1, headY + 5, 1, 1, "#e8927a");
+    const f = dir === "left" ? -1 : 1;
+    px(ctx, -4, headY + 1, 8, 3, hair);
+    px(ctx, -3, headY, 6, 1, hairDark);
+    px(ctx, f > 0 ? -4 : 2, headY + 1, 2, 6, hair); // back-of-head hair
+    const ex = f > 0 ? 1 : -2;
+    if (!blink) px(ctx, ex, headY + 4, 1, 2, eye);
+    else px(ctx, ex, headY + 5, 1, 1, eye);
+    px(ctx, f > 0 ? -1 : 0, headY + 5, 1, 1, cheek);
   } else {
-    // facing down (front): fringe + two eyes
-    px(ctx, -4, headY, 8, 3, hair);
-    px(ctx, -4, headY + 2, 1, 2, hair);
-    px(ctx, 3, headY + 2, 1, 2, hair);
+    // Front-facing: fringe, sideburns, eyes, cheeks
+    px(ctx, -4, headY + 1, 8, 2, hair);
+    px(ctx, -3, headY, 6, 1, hairDark);
+    px(ctx, -4, headY + 1, 1, 3, hair); // left sideburn
+    px(ctx, 3, headY + 1, 1, 3, hair); // right sideburn
+    px(ctx, -3, headY + 1, 5, 1, hairLite); // fringe highlight
     if (!blink) {
-      px(ctx, -2, headY + 4, 1, 2, "#15171d");
-      px(ctx, 1, headY + 4, 1, 2, "#15171d");
+      px(ctx, -2, headY + 4, 1, 2, eye);
+      px(ctx, 1, headY + 4, 1, 2, eye);
     } else {
-      px(ctx, -2, headY + 5, 1, 1, "#15171d");
-      px(ctx, 1, headY + 5, 1, 1, "#15171d");
+      px(ctx, -2, headY + 5, 1, 1, eye);
+      px(ctx, 1, headY + 5, 1, 1, eye);
     }
-    // cheeks
-    px(ctx, -3, headY + 5, 1, 1, "#e8927a");
-    px(ctx, 2, headY + 5, 1, 1, "#e8927a");
+    px(ctx, -3, headY + 5, 1, 1, cheek);
+    px(ctx, 2, headY + 5, 1, 1, cheek);
     if (opts.smile) px(ctx, -1, headY + 6, 2, 1, "#9c5a3c");
+  }
+
+  if (headphones) {
+    const band = "#33406b";
+    const bandLite = "#46568c";
+    const accent = "#e0a85c";
+    px(ctx, -5, headY - 1, 10, 1, band); // top band
+    px(ctx, -4, headY - 1, 8, 1, bandLite); // band highlight
+    px(ctx, -5, headY, 1, 3, band); // left yoke
+    px(ctx, 4, headY, 1, 3, band); // right yoke
+    px(ctx, -6, headY + 2, 2, 3, band); // left cup
+    px(ctx, 4, headY + 2, 2, 3, band); // right cup
+    px(ctx, -6, headY + 3, 1, 1, accent); // amber accents
+    px(ctx, 5, headY + 3, 1, 1, accent);
   }
 
   ctx.restore();
 }
 
-function drawArms(ctx, torsoTop, shirt, skin, dir, arm, frame) {
+function drawArms(ctx, torsoTop, shirt, skin, dir, arm, frame, waveT = 0) {
   const swing = frame === 1 ? 1 : frame === 3 ? -1 : 0;
-  // default resting arms at sides
-  const armColor = shirt;
+  const sleeve = shirt;
   if (arm === "type") {
-    // both hands forward (toward keyboard/desk)
-    px(ctx, -5, torsoTop + 2, 2, 3, armColor);
-    px(ctx, 3, torsoTop + 2, 2, 3, armColor);
-    px(ctx, -5, torsoTop + 5, 2, 1, skin);
-    px(ctx, 3, torsoTop + 5, 2, 1, skin);
-  } else if (arm === "raise" || arm === "wave") {
-    // right arm up (wave)
-    px(ctx, -5, torsoTop + 1, 2, 4, armColor);
-    px(ctx, 3, torsoTop - 3, 2, 4, armColor);
-    px(ctx, 3, torsoTop - 4, 2, 1, skin); // hand up
-    px(ctx, -5, torsoTop + 5, 2, 1, skin);
-  } else if (arm === "hold") {
-    // both arms slightly forward holding a cup/book
-    px(ctx, -5, torsoTop + 2, 2, 3, armColor);
-    px(ctx, 3, torsoTop + 2, 2, 3, armColor);
-  } else if (arm === "read") {
-    px(ctx, -5, torsoTop + 1, 2, 3, armColor);
-    px(ctx, 3, torsoTop + 1, 2, 3, armColor);
+    px(ctx, -6, torsoTop + 2, 2, 3, sleeve);
+    px(ctx, 4, torsoTop + 2, 2, 3, sleeve);
+    px(ctx, -6, torsoTop + 5, 2, 1, skin);
+    px(ctx, 4, torsoTop + 5, 2, 1, skin);
+  } else if (arm === "wave" || arm === "raise") {
+    // left arm rests, right arm raised (wags when waveT animates)
+    const wag = Math.round(Math.sin(waveT * Math.PI * 6) * 1);
+    px(ctx, -6, torsoTop + 1, 2, 4, sleeve);
+    px(ctx, -6, torsoTop + 5, 2, 1, skin);
+    px(ctx, 4 + wag, torsoTop - 4, 2, 5, sleeve);
+    px(ctx, 4 + wag, torsoTop - 5, 2, 1, skin); // raised hand
+  } else if (arm === "hold" || arm === "read") {
+    px(ctx, -6, torsoTop + 2, 2, 3, sleeve);
+    px(ctx, 4, torsoTop + 2, 2, 3, sleeve);
+    px(ctx, -6, torsoTop + 4, 2, 1, skin);
+    px(ctx, 4, torsoTop + 4, 2, 1, skin);
   } else {
-    // rest, gentle swing with walk
-    px(ctx, -5, torsoTop + 1 + swing, 2, 4, armColor);
-    px(ctx, 3, torsoTop + 1 - swing, 2, 4, armColor);
-    px(ctx, -5, torsoTop + 5 + swing, 2, 1, skin);
-    px(ctx, 3, torsoTop + 5 - swing, 2, 1, skin);
+    px(ctx, -6, torsoTop + 1 + swing, 2, 4, sleeve);
+    px(ctx, 4, torsoTop + 1 - swing, 2, 4, sleeve);
+    px(ctx, -6, torsoTop + 5 + swing, 2, 1, skin);
+    px(ctx, 4, torsoTop + 5 - swing, 2, 1, skin);
   }
 }
 
