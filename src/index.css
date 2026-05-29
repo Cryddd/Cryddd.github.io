@@ -271,16 +271,6 @@ section {
   position: relative;
 }
 
-.cafe-scene {
-  width: 100%;
-  height: auto;
-  border-radius: 16px;
-  border: 1px solid var(--line);
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45),
-    0 0 0 1px rgba(224, 168, 92, 0.05) inset;
-  background: var(--panel);
-}
-
 .hero__caption {
   margin-top: 1rem;
   font-family: var(--mono);
@@ -543,60 +533,33 @@ section {
   }
 }
 
-/* ── 3D scenes ─────────────────────────────── */
-.scene3d {
+/* ── Pixel scenes (2D canvas) ──────────────── */
+.pixelscene {
   position: relative;
   width: 100%;
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid var(--line);
-  background: var(--panel);
+  background: #b07a44;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45),
     0 0 0 1px rgba(224, 168, 92, 0.05) inset;
 }
 
-.scene3d__canvas {
+.pixelscene__canvas {
   width: 100%;
   height: 100%;
 }
 
-.scene3d--loading {
-  background: linear-gradient(110deg, var(--panel), var(--bg-soft), var(--panel));
-  background-size: 220% 100%;
-  animation: shimmer 1.6s ease-in-out infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 180% 0;
-  }
-  100% {
-    background-position: -80% 0;
-  }
-}
-
-.hero3d {
-  aspect-ratio: 4 / 3;
-}
-
-.library3d {
+.hero-room {
   aspect-ratio: 16 / 9;
-  background: #0d0a08;
+  background: #8f9d8a;
 }
 
-/* Vignette to deepen the dim library mood; lets the moving lamp pop. */
-.library3d__veil {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(
-    120% 90% at 50% 40%,
-    transparent 35%,
-    rgba(8, 6, 4, 0.5) 100%
-  );
+.library-room {
+  aspect-ratio: 16 / 9;
 }
 
-.scene3d__hint {
+.pixelscene__hint {
   position: absolute;
   left: 0;
   right: 0;

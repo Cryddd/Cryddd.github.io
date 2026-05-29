@@ -1,11 +1,10 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import MagneticText from "./components/MagneticText.jsx";
 import CursorGlow from "./components/CursorGlow.jsx";
 import Ambience from "./components/Ambience.jsx";
+import TopViewHeroRoom from "./components/TopViewHeroRoom.jsx";
+import TopViewLibraryZone from "./components/TopViewLibraryZone.jsx";
 import { useInteractiveText } from "./context/InteractiveTextContext.jsx";
-
-const HeroScene3D = lazy(() => import("./components/HeroScene3D.jsx"));
-const LibraryZone3D = lazy(() => import("./components/LibraryZone3D.jsx"));
 
 const CRAFT = [
   {
@@ -132,9 +131,7 @@ export default function App() {
             </div>
           </div>
           <div className="hero__scene">
-            <Suspense fallback={<div className="scene3d scene3d--loading hero3d" />}>
-              <HeroScene3D />
-            </Suspense>
+            <TopViewHeroRoom />
             <p className="hero__caption">
               Afternoon light, one cup, and a problem worth solving.
             </p>
@@ -187,14 +184,12 @@ export default function App() {
             <p className="library__lede">
               <MagneticText
                 tone="body"
-                text="A quiet, living library — people browse the shelves, others read or work by lamplight. The room rests in shadow until your cursor brings the warmth."
+                text="A warm, living library — people stroll between the shelves, browse for books, and settle in to read or work by lamplight. Sit a while and watch the room breathe."
               />
             </p>
           </Reveal>
           <Reveal delay={160}>
-            <Suspense fallback={<div className="scene3d scene3d--loading library3d" />}>
-              <LibraryZone3D />
-            </Suspense>
+            <TopViewLibraryZone />
           </Reveal>
         </section>
 
